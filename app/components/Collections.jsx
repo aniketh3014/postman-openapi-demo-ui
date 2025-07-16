@@ -192,6 +192,11 @@ export default function Collections() {
       // Fetch requests for this collection
       const reqRes = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080/api/v1"}/postman/${id}/requests`,
+        {
+          headers: {
+            "ngrok-skip-browser-warning": "true",
+          },
+        },
       );
       const reqJson = await reqRes.json();
       setCollectionRequests(reqJson.success ? reqJson.data : []);
@@ -239,6 +244,9 @@ export default function Collections() {
         `${process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080/api/v1"}/postman/${id}`,
         {
           method: "DELETE",
+          headers: {
+            "ngrok-skip-browser-warning": "true",
+          },
         },
       );
       if (selectedId === id) setSelectedId(null);

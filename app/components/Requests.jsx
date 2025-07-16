@@ -7,7 +7,11 @@ const API_BASE =
 
 // List all requests
 async function fetchRequests() {
-  const res = await fetch(`${API_BASE}/requests`);
+  const res = await fetch(`${API_BASE}/requests`, {
+    headers: {
+      "ngrok-skip-browser-warning": "true",
+    },
+  });
   if (!res.ok) throw new Error("Failed to fetch requests");
   const json = await res.json();
   if (!json.success) throw new Error("API returned unsuccessful response");
@@ -16,7 +20,11 @@ async function fetchRequests() {
 
 // Get request by ID
 async function fetchRequest(id) {
-  const res = await fetch(`${API_BASE}/requests/${id}`);
+  const res = await fetch(`${API_BASE}/requests/${id}`, {
+    headers: {
+      "ngrok-skip-browser-warning": "true",
+    },
+  });
   if (!res.ok) throw new Error("Failed to fetch request");
   return res.json();
 }
@@ -25,7 +33,10 @@ async function fetchRequest(id) {
 async function createRequest(data) {
   const res = await fetch(`${API_BASE}/requests`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true",
+    },
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error("Failed to create request");
@@ -34,7 +45,12 @@ async function createRequest(data) {
 
 // Delete request
 async function deleteRequest(id) {
-  const res = await fetch(`${API_BASE}/requests/${id}`, { method: "DELETE" });
+  const res = await fetch(`${API_BASE}/requests/${id}`, {
+    method: "DELETE",
+    headers: {
+      "ngrok-skip-browser-warning": "true",
+    },
+  });
   if (!res.ok) throw new Error("Failed to delete request");
   return res.json();
 }
@@ -43,7 +59,10 @@ async function deleteRequest(id) {
 async function updatePayload(id, payload) {
   const res = await fetch(`${API_BASE}/requests/${id}/payload`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true",
+    },
     body: JSON.stringify({ payload }),
   });
   if (!res.ok) throw new Error("Failed to update payload");
@@ -54,7 +73,10 @@ async function updatePayload(id, payload) {
 async function updateHeaders(id, headersObj) {
   const res = await fetch(`${API_BASE}/requests/${id}/headers`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true",
+    },
     body: JSON.stringify(headersObj),
   });
   if (!res.ok) throw new Error("Failed to update headers");
@@ -65,7 +87,10 @@ async function updateHeaders(id, headersObj) {
 async function updateParams(id, paramsObj) {
   const res = await fetch(`${API_BASE}/requests/${id}/params`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true",
+    },
     body: JSON.stringify({ params: paramsObj }),
   });
   if (!res.ok) throw new Error("Failed to update params");
@@ -76,7 +101,10 @@ async function updateParams(id, paramsObj) {
 async function cloneRequest(id, name) {
   const res = await fetch(`${API_BASE}/requests/${id}/clone`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "ngrok-skip-browser-warning": "true",
+    },
     body: JSON.stringify({ name }),
   });
   if (!res.ok) throw new Error("Failed to clone request");
@@ -85,7 +113,11 @@ async function cloneRequest(id, name) {
 
 // List requests for a collection
 async function fetchRequestsByCollection(collectionId) {
-  const res = await fetch(`${API_BASE}/postman/${collectionId}/requests`);
+  const res = await fetch(`${API_BASE}/postman/${collectionId}/requests`, {
+    headers: {
+      "ngrok-skip-browser-warning": "true",
+    },
+  });
   if (!res.ok) throw new Error("Failed to fetch requests for collection");
   const json = await res.json();
   if (!json.success) throw new Error("API returned unsuccessful response");
@@ -231,7 +263,7 @@ function RequestDetail({
   onSaveParams,
   saving,
 }) {
-  const [body, setBody] = useState(request?.body || {});
+  const [body, setBody] = useState(request?.body || { mode: "raw", raw: "" });
   const [headers, setHeaders] = useState(request?.headers || {});
   const [params, setParams] = useState(request?.params?.params || {});
   const [editPayload, setEditPayload] = useState(false);
@@ -239,7 +271,7 @@ function RequestDetail({
   const [editParams, setEditParams] = useState(false);
 
   useEffect(() => {
-    setBody(request?.body || {});
+    setBody(request?.body || { mode: "raw", raw: "" });
     setHeaders(request?.headers || {});
     setParams(request?.params?.params || {});
     setEditPayload(false);
@@ -263,12 +295,21 @@ function RequestDetail({
             <span className="italic text-gray-400">Unnamed</span>
           )}
         </h3>
+        {request.description && (
+          <p className="text-sm text-gray-600 mt-1">{request.description}</p>
+        )}
         <div className="text-xs text-gray-500 mt-1">ID: {request.id}</div>
         <div className="text-xs text-black">
           Collection:{" "}
-          {request.collection_id || request.collectionId || (
+          {request.collection_id || (
             <span className="italic text-gray-400">none</span>
           )}
+        </div>
+        <div className="text-xs text-gray-500 mt-1">
+          Created: {new Date(request.created_at).toLocaleString()}
+        </div>
+        <div className="text-xs text-gray-500">
+          Updated: {new Date(request.updated_at).toLocaleString()}
         </div>
       </div>
       {/* Payload */}
@@ -296,29 +337,6 @@ function RequestDetail({
                 placeholder="Payload (raw)"
               />
             )}
-            {(body.mode === "formdata" || body.mode === "urlencoded") && (
-              <KeyValueEditor
-                label={body.mode === "formdata" ? "Form Data" : "URL Encoded"}
-                data={
-                  Array.isArray(body[body.mode])
-                    ? Object.fromEntries(
-                        (body[body.mode] || []).map((kv) => [kv.key, kv.value]),
-                      )
-                    : body[body.mode] || {}
-                }
-                onChange={(kvObj) =>
-                  setBody((prev) => ({
-                    ...prev,
-                    [body.mode]: Object.entries(kvObj).map(([key, value]) => ({
-                      key,
-                      value,
-                    })),
-                  }))
-                }
-                disabled={false}
-              />
-            )}
-            {/* Add more modes as needed */}
             <button
               className="mt-2 px-4 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700 w-full"
               onClick={() => onSavePayload(request.id, body)}
@@ -329,11 +347,15 @@ function RequestDetail({
           </>
         ) : (
           <pre className="bg-gray-100 rounded p-3 text-xs overflow-x-auto text-black">
-            {body.mode === "raw"
-              ? body.raw || (
-                  <span className="italic text-gray-400">No payload</span>
-                )
-              : JSON.stringify(body, null, 2)}
+            {body.mode === "raw" && body.raw ? (
+              typeof body.raw === "string" ? (
+                body.raw
+              ) : (
+                JSON.stringify(body.raw, null, 2)
+              )
+            ) : (
+              <span className="italic text-gray-400">No payload</span>
+            )}
           </pre>
         )}
       </div>
@@ -590,12 +612,16 @@ export default function Requests() {
   // Fetch all collections (for create form)
   const loadCollections = async () => {
     try {
-      const res = await fetch(`${API_BASE}/postman`);
+      const res = await fetch(`${API_BASE}/postman`, {
+        headers: {
+          "ngrok-skip-browser-warning": "true",
+        },
+      });
       const json = await res.json();
       if (!json.success) throw new Error("API returned unsuccessful response");
       setCollections(json.data || []);
     } catch (err) {
-      // ignore for now
+      // ignore
     }
   };
 
@@ -741,13 +767,15 @@ export default function Requests() {
                 Loading request...
               </div>
             ) : (
-              <RequestDetail
-                request={selectedRequest}
-                onSavePayload={handleSavePayload}
-                onSaveHeaders={handleSaveHeaders}
-                onSaveParams={handleSaveParams}
-                saving={saving}
-              />
+              <>
+                <RequestDetail
+                  request={selectedRequest}
+                  onSavePayload={handleSavePayload}
+                  onSaveHeaders={handleSaveHeaders}
+                  onSaveParams={handleSaveParams}
+                  saving={saving}
+                />
+              </>
             )}
           </div>
         </div>

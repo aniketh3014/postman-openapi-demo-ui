@@ -8,6 +8,7 @@ import {
   exportOpenAPI,
 } from "../lib/api.js";
 
+import { fetchWithNgrokHeader } from "../lib/api.js";
 function OpenAPIList({ specs, onSelect, onDelete, selectedId, loading }) {
   return (
     <div className="space-y-2 w-full">
@@ -229,6 +230,9 @@ export default function OpenAPIs() {
         `${process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8080/api/v1"}/openapi/${id}`,
         {
           method: "DELETE",
+          headers: {
+            "ngrok-skip-browser-warning": "true",
+          },
         },
       );
       if (selectedId === id) setSelectedId(null);
